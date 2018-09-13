@@ -1,0 +1,28 @@
+=============== Sep 12, 2018 (CST) ===============
+10:31:07.999539 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+10:31:08.004719 db@open opening
+10:31:08.006249 version@stat F·[] S·0B[] Sc·[]
+10:31:08.007975 db@janitor F·2 G·0
+10:31:08.008012 db@open done T·3.259384ms
+10:31:08.852323 memdb@flush N·202953 S·3MiB
+10:31:08.926267 memdb@flush created L0@3 N·202953 S·1MiB "key\x00,v1":"key\U000318c8,v202953"
+10:31:08.926325 version@stat F·[1] S·1MiB[1MiB] Sc·[0.25]
+10:31:08.928797 memdb@flush committed F·1 T·76.409343ms
+10:31:08.929922 journal@remove removed @1
+10:31:09.671139 memdb@flush N·199728 S·3MiB
+10:31:09.731832 memdb@flush created L0@5 N·199728 S·1MiB "key\U000318c9,v202954":"key\U000624f8,v402681"
+10:31:09.731878 version@stat F·[2] S·2MiB[2MiB] Sc·[0.50]
+10:31:09.734740 memdb@flush committed F·1 T·63.559475ms
+10:31:09.735690 journal@remove removed @2
+10:31:10.457509 memdb@flush N·199728 S·3MiB
+10:31:10.530563 memdb@flush created L0@7 N·199728 S·1MiB "key\U000624f9,v402682":"key\U00093128,v602409"
+10:31:10.530606 version@stat F·[3] S·4MiB[4MiB] Sc·[0.75]
+10:31:10.533267 memdb@flush committed F·1 T·75.721281ms
+10:31:10.534259 journal@remove removed @4
+10:31:11.209395 memdb@flush N·199728 S·3MiB
+10:31:11.281678 memdb@flush created L0@9 N·199728 S·1MiB "key\U00093129,v602410":"key\U000c3d58,v802137"
+10:31:11.281741 version@stat F·[4] S·5MiB[5MiB] Sc·[1.00]
+10:31:11.284246 memdb@flush committed F·1 T·74.790155ms
+10:31:11.285198 journal@remove removed @6
+10:31:11.285261 table@move L0@9 -> L1
+10:31:11.285331 version@stat F·[3 1] S·5MiB[4MiB 1MiB] Sc·[0.75 0.01]
