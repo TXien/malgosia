@@ -39,5 +39,5 @@ func Router(coreStruct *types.CoreStruct){
                 res.Write([]byte(""))
         }
 
-	http.HandleFunc("/broadcast", Broadcast)
+	http.HandleFunc("/pendingTransaction", PendingTransaction)
 }

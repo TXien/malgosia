@@ -42,8 +42,11 @@ func /*(db *mleveldb)*/AccountHexPut(db *leveldb.DB, keys string,data types.Acco
 
 func /*(db *mleveldb)*/AccountHexGet(db *leveldb.DB, keys string)(types.AccountData){
         key,_ := hex.DecodeString(keys)
+	//fmt.Println("AccountHexGet:",keys)
         data, _ := db.Get(key, nil)
-        inter := types.AccountData{}
+	//fmt.Println(data)
+	//fmt.Println("AccountHexGet:",data)
+	inter := types.AccountData{}
         json.Unmarshal(data, &inter)
         return inter
 }
@@ -60,6 +63,18 @@ func /*(db *mleveldb)*/BlockHexGet(db *leveldb.DB, keys string)(types.BlockJson)
         inter := types.BlockJson{}
         json.Unmarshal(data, &inter)
         return inter
+}
+
+func /*(db *mleveldb)*/HexKeyPut(db *leveldb.DB, keys string, data string){
+        key,_ := hex.DecodeString(keys)
+        //data_byte, _ := json.Marshal(data)
+        db.Put(key, []byte(data), nil)
+}
+
+func /*(db *mleveldb)*/HexKeyGet(db *leveldb.DB, keys string)(string){
+        key,_ := hex.DecodeString(keys)
+        data, _ := db.Get(key, nil)
+        return string(data)
 }
 
 func /*(db *mleveldb)*/BlockPut(db *leveldb.DB, key []byte,data types.BlockJson){

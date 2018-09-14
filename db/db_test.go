@@ -1,19 +1,20 @@
 package db
 
 import (
-        //"encoding/hex"
+        "encoding/hex"
         "fmt"
-        "reflect"
+	"lurcury/account"
+	//"reflect"
         "testing"
 	"time"
 )
 
 func TestAccount(t *testing.T){
-        check := func(f string, got, want interface{}) {
-                if !reflect.DeepEqual(got, want) {
-                        t.Errorf("%s mismatch: got %v, want %v", f, got, want)
-                }
-        }
+        //check := func(f string, got, want interface{}) {
+        //        if !reflect.DeepEqual(got, want) {
+        //                t.Errorf("%s mismatch: got %v, want %v", f, got, want)
+        //        }
+        //}
         db := OpenDB("../dbdata")
 	t1 := time.Now()
 	for i :=1; i <=10000; i++{
@@ -29,7 +30,26 @@ func TestAccount(t *testing.T){
 	}
 	fmt.Println("get10000:",time.Now().Sub(t2))
 	f,_ := db.Get([]byte("keydd1"),nil)
-	d := string(f)
+	//d := string(f)
         fmt.Println(f)
-	check("get:","11",d)
+	//check("get:","11",d)
+	
+	account_tmp := account.Account_exp()
+	AccountHexPut(db, account_tmp.Address, account_tmp)
+	fmt.Println(AccountHexGet(db, "gx5ee464a101d58877f00957eff452c148e7f75833"))
+	account_tmp.Address = "gx"
+	AccountHexPut(db, "gx5ee464a101d58877f00957eff452c148e7f75830", account_tmp)
+	fmt.Println("33",AccountHexGet(db, "gx5ee464a101d58877f00957eff452c148e7f75833"))
+	fmt.Println("30",AccountHexGet(db, "1"))
+
+	db.Put( []byte("keydd1"), []byte("11"),nil)
+	b,_ := db.Get([]byte("keydd1"),nil)
+	db.Put( []byte("keydd2"), []byte("12"),nil)
+	fmt.Println("b:",b)
+	fff,_ := db.Get([]byte("keydd1"),nil)
+	fmt.Println(fff)
+
+        keyf,_ := hex.DecodeString("aaa")
+        keyd,_ := hex.DecodeString("fff")
+	fmt.Println(keyf,keyd)
 }

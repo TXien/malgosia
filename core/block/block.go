@@ -2,15 +2,42 @@ package block
 
 import (
 	"lurcury/crypto/eddsa"
+	"lurcury/db"
+	"lurcury/params"
 	//"lurcury/core/transaction"
 	"lurcury/types"
 	"encoding/hex"
 	//"encoding/json"
-	//"fmt"
+	"fmt"
 	"strconv"
 	"time"
 	"lurcury/crypto"
 )
+func CreateBlockPOA(core_arg *types.CoreStruct, parentBlock types.BlockJson, key string)(types.BlockJson){
+	newBlock := CreateNewBlock(parentBlock)
+	newBlock.Transaction = core_arg.PendingTransaction
+	fmt.Println("tssst:",newBlock.Transaction)
+        newBlock.Transaction = append(newBlock.Transaction, core_arg.PendingTransaction[0])
+	fmt.Println("testtt:",newBlock.Transaction)
+	encodeBlock := BlockEncode(newBlock)
+	signBlock :=  BlockSign("ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba", encodeBlock)
+
+        return signBlock
+}
+
+
+func CreateNewBlock(parentBlock types.BlockJson)(types.BlockJson){
+        s := types.BlockJson{
+                Version: "sue",
+                BlockNumber: parentBlock.BlockNumber+1,
+                ParentHash: parentBlock.Hash,
+                Nonce: 0,
+                Timestamp: time.Now().UnixNano(),
+                ExtraData: "ka",
+                //Hash: hash,
+        }
+        return s
+}
 
 func NowBlock(block types.BlockJson)(types.BlockJson){
         s := types.BlockJson{
@@ -73,7 +100,8 @@ func BlockEncode_DB(block types.BlockJson)(types.BlockJson){
         return block
 }
 
-func BlockSign(pri []byte, block types.BlockJson)(types.BlockJson){
+func BlockSign(priv string, block types.BlockJson)(types.BlockJson){
+	pri, _ := hex.DecodeString(priv)
 	hash, _ := hex.DecodeString(block.Hash)
 	re := eddsa.EddsaSign(pri, hash)
 	block.Verifier = append(block.Verifier, types.VerifierJson{Sign:hex.EncodeToString(re),Verifier:hex.EncodeToString(pri[32:]),N:0})
@@ -85,10 +113,30 @@ func AppendTransaction(trans types.TransactionJson, block types.BlockJson)(types
 	block.Transaction = append(block.Transaction, trans)
 	return block
 }
-
+/*
 func POA()(bool){
 	return true
 }
+*/
+func CheckRecentBlock(core_arg *types.CoreStruct)(string){
+	b := params.Chain()
+	c := db.HexKeyGet(core_arg.Db, b.Hash)
+	return c
+}
+
+func ExpBlock()(block types.BlockJson){
+        b:=NewBlock("sue",
+        0,
+        "fea4910f5d3e2d3af187cec5b8d8b1cfe99a9f5545ba50495bd42f4bae234b3a",
+        0,
+        0,
+        "mogotisa",
+        //"fea4910f5d3e2d3af187cec5b8d8b1cfe99a9f5545ba50495bd42f4bae234b3a",
+        )
+        //fmt.Println(b)
+        return b
+}
+
 /*
 func main(){
 	t1 := time.Now()

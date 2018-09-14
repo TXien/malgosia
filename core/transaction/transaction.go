@@ -52,7 +52,7 @@ func SignTransaction_hex(prik string, Transaction types.TransactionJson)(types.T
 
 func EncodeForSign(Transaction types.TransactionJson)(string){
 	//fmt.Println("check", Transaction)
-        to        := "gx"+StringTransactionEncode(Transaction.To[2:], 42)
+        to        := "gx"+StringTransactionEncode(Transaction.To/*[2:]*/, 42)
         nonce_tmp := strconv.FormatInt(int64(Transaction.Nonce), 16)
         nonce     := "hx"+StringTransactionEncode(nonce_tmp, 32)
         fee_tmp   := strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)
@@ -230,9 +230,14 @@ func VerifyTransactionSign(Transaction types.TransactionJson)( bool){
 }
 
 func VerifyTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction types.TransactionJson)(bool, string){
-        address := "gx"+crypto.KeyToAddress_hex(Transaction.PublicKey)
+        address := /*"gx"+*/crypto.KeyToAddress_hex(Transaction.PublicKey)
+	fmt.Println(Transaction.PublicKey)
+	fmt.Println(address)
 	fromAccountInfo := db.AccountHexGet(core_arg.Db, address)
 	//feeAccountInfo := db.AccountHexGet(core_arg.Db, params.Chain().Version.Sue.FeeAddress)
+	fmt.Println(fromAccountInfo)
+        fmt.Println("testn:", Transaction.Nonce)
+        fmt.Println("testn:", fromAccountInfo.Nonce)
 
 	if(Transaction.Nonce != fromAccountInfo.Nonce){
 		return false, "nonce error"
@@ -308,7 +313,7 @@ func VerifyBalance(transaction types.TransactionJson, fromAccount types.AccountD
 func ExpTransaction()(types.TransactionJson){
         re := NewTransaction(
                 //"gx5ee464a101d58877f00957eff452c148e7f75834",
-		"gx5ee464a101d58877f00957eff452c148e7f75833",
+		"264411884d6d2aca8ca2d2a77c9dc95ffdcee529",
 		"deh",
                 *big.NewInt(1000),
                 0,

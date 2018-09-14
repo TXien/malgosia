@@ -25,7 +25,7 @@ type AccountData struct{
 func NewAccount()(string, string, string){
 	pri ,pub := eddsa.EddsaGenerateKey()
 	addr := crypto.KeyToAddress(pri)
-	return hex.EncodeToString(pri), hex.EncodeToString(pub), "gx"+(hex.EncodeToString(addr))
+	return hex.EncodeToString(pri), hex.EncodeToString(pub), (hex.EncodeToString(addr))
 }
 
 func Account_exp()(types.AccountData){
@@ -41,7 +41,7 @@ func Account_exp()(types.AccountData){
                 Balance:*big.NewInt(100000),
         }
         s := types.AccountData{
-               Address:"gx5ee464a101d58877f00957eff452c148e7f75834",
+               Address:"264411884d6d2aca8ca2d2a77c9dc95ffdcee529",
                 Nonce:0,
                 Balance:[]types.BalanceData{b,c},
                 Transaction:[]types.TransactionJson{},
