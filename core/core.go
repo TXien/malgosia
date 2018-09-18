@@ -52,8 +52,13 @@ func main(){
 	}
 	fmt.Println(tt)
 	fmt.Println(core_arg.PendingTransaction)
+	for i := 0; i<10000; i++{
+		time.Sleep(1 * time.Second)
+		fmt.Println(core_arg.PendingTransaction)
+	}
 	time.Sleep(30 * time.Second)
 	fmt.Println(core_arg.PendingTransaction)
+
 }
 
 

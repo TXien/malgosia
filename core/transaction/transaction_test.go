@@ -4,7 +4,7 @@ import (
         //"encoding/hex"
         "fmt"
 	"lurcury/account"
-	"lurcury/crypto"
+//	"lurcury/crypto"
 	"lurcury/db"
         "lurcury/types"
         //"math/big"
@@ -23,6 +23,7 @@ func TestTransaction(t *testing.T){
         //fmt.Println(b)
 	fmt.Println("sign verify test:",VerifyTransactionSign(b))
 */
+
 	core_arg := &types.CoreStruct{}
         core_arg.Db = db.OpenDB("../dbdata")
 
@@ -31,6 +32,7 @@ func TestTransaction(t *testing.T){
         account_tmp := account.Account_exp()
 	fmt.Println(account_tmp)
 	db.AccountHexPut(core_arg.Db, account_tmp.Address, account_tmp)
+
 /*
 	account_tmp2 := account.Account_exp()
 	account_tmp2.Address = "5ee464a101d58877f00957eff452c148e7f75833"
@@ -55,17 +57,18 @@ func TestTransaction(t *testing.T){
 	fmt.Println("sign verify test:",VerifyTransactionSign(pp))
 	fmt.Println("pp:",pp)
 */
+fmt.Println(pp)
 	m1, m2 := VerifyTransactionBalanceAndNonce(*core_arg, pp)
 	fmt.Println("verify balance and nonce:",m1)
 	fmt.Println("balanceresult:",m2)
-
+/*
 
 	a3 := db.AccountHexGet(core_arg.Db, account_tmp.Address)
 	fmt.Println("test for verify balance and nonce result:",a3)
 	fmt.Println(pp.PublicKey)
 	a4 := db.AccountHexGet(core_arg.Db, crypto.KeyToAddress_hex(pp.PublicKey))
 	fmt.Println(a4)
-	
+*/	
 	check("go","123","123")
 
 }

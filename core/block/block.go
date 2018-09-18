@@ -4,7 +4,7 @@ import (
 	"lurcury/crypto/eddsa"
 	"lurcury/db"
 	"lurcury/params"
-	//"lurcury/core/transaction"
+	"lurcury/core/transaction"
 	"lurcury/types"
 	"encoding/hex"
 	//"encoding/json"
@@ -16,12 +16,22 @@ import (
 func CreateBlockPOA(core_arg *types.CoreStruct, parentBlock types.BlockJson, key string)(types.BlockJson){
 	newBlock := CreateNewBlock(parentBlock)
 	newBlock.Transaction = core_arg.PendingTransaction
-	fmt.Println("tssst:",newBlock.Transaction)
-        newBlock.Transaction = append(newBlock.Transaction, core_arg.PendingTransaction[0])
-	fmt.Println("testtt:",newBlock.Transaction)
+	//fmt.Println("tssst:",newBlock.Transaction)
+	for i := 0; i < len(core_arg.PendingTransaction); i++{
+		result , err:= transaction.VerifyTransactionBalanceAndNonce(*core_arg, core_arg.PendingTransaction[i])
+		fmt.Println(err)
+		if(result == true){
+			newBlock.Transaction = append(newBlock.Transaction, core_arg.PendingTransaction[i])
+		}
+	}
+	//fmt.Println("newBlock:",newBlock)
+	//newBlock.Timestamp = 1536924111618191122
+	//fmt.Println("testtt:",newBlock.Transaction)
 	encodeBlock := BlockEncode(newBlock)
-	signBlock :=  BlockSign("ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba", encodeBlock)
-
+	//fmt.Println("encodeBlock:",encodeBlock)
+	signBlock :=  BlockSign(key, encodeBlock)
+	//fmt.Println("BlockSign.Hash:",signBlock.Hash)
+	db.BlockHexPut(core_arg.Db, signBlock.Hash, signBlock)
         return signBlock
 }
 

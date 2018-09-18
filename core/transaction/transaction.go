@@ -15,6 +15,12 @@ import(
 	//"reflect"
 )
 
+func DeletPendingTransaction(core_arg types.CoreStruct, i int)(types.CoreStruct){
+        core_arg.PendingTransaction[i] = core_arg.PendingTransaction[len(core_arg.PendingTransaction)-1]
+	core_arg.PendingTransaction = core_arg.PendingTransaction[:len(core_arg.PendingTransaction)-1]
+        core_arg.PendingTransaction = core_arg.PendingTransaction[:len(core_arg.PendingTransaction)-1]
+        return core_arg
+}
 
 func NewTransaction(To string, Token string, Balance big.Int , Nonce int, Fee big.Int, Type string, Input string)(types.TransactionJson){
 	out := []types.TransactionOut{
@@ -230,35 +236,33 @@ func VerifyTransactionSign(Transaction types.TransactionJson)( bool){
 }
 
 func VerifyTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction types.TransactionJson)(bool, string){
-        address := /*"gx"+*/crypto.KeyToAddress_hex(Transaction.PublicKey)
-	fmt.Println(Transaction.PublicKey)
-	fmt.Println(address)
+	
+	address := crypto.KeyToAddress_hex(Transaction.PublicKey)
+	//fmt.Println(Transaction.PublicKey)
+	//fmt.Println(address)
 	fromAccountInfo := db.AccountHexGet(core_arg.Db, address)
 	//feeAccountInfo := db.AccountHexGet(core_arg.Db, params.Chain().Version.Sue.FeeAddress)
-	fmt.Println(fromAccountInfo)
-        fmt.Println("testn:", Transaction.Nonce)
-        fmt.Println("testn:", fromAccountInfo.Nonce)
-
+	//fmt.Println(fromAccountInfo)
+        //fmt.Println("testn:", Transaction.Nonce)
+        //fmt.Println("testn:", fromAccountInfo.Nonce)
+	
 	if(Transaction.Nonce != fromAccountInfo.Nonce){
 		return false, "nonce error"
 	}
-
         feeAccountInfo := db.AccountHexGet(core_arg.Db, params.Chain().Version.Sue.FeeAddress)
-
 	feeResult, fromAccountInfo, feeAccountInfo := VerifyFee(Transaction, fromAccountInfo, feeAccountInfo)
 
-        if(feeResult != true){
-                return false, "fee error"
+	if(feeResult != true){
+		return false, "fee error"
         }
 
         if(Transaction.Nonce != fromAccountInfo.Nonce){
                 return false, "nonce error"
         }
-	
 	toAccountInfo := db.AccountHexGet(core_arg.Db, Transaction.To)
 	//ToAddress_s :=Transaction.To
-	fmt.Println("from:",fromAccountInfo)
-	fmt.Println("to:",toAccountInfo)
+	//fmt.Println("from:",fromAccountInfo)
+	//fmt.Println("to:",toAccountInfo)
 	//if(fromAccountInfo.Address != toAccountInfo.Address){
 	if (fromAccountInfo.Address == toAccountInfo.Address){
 		return false, "same address"
@@ -280,17 +284,33 @@ func VerifyTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction typ
 }
 
 func VerifyFee(transaction types.TransactionJson, fromAccount types.AccountData, feeAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+
 	for u:= 0; u < len(fromAccount.Balance); u++{
+		//fmt.Println(fromAccount.Balance)
 		if( fromAccount.Balance[u].Token == params.Chain().Version.Sue.FeeToken){
 			if(transaction.Fee.Cmp(&fromAccount.Balance[u].Balance)>=0){
-			/*fromAccount.Balance[u].Balance =*/ //fromAccount.Balance[u].Balance.Sub(&fromAccount.Balance[u].Balance, &transaction.Fee)
 				return false, fromAccount, feeAccount
 			}else{
+				//feeAccount.Balance[d].Balance.Add(&feeAccount.Balance[d].Balance, &transaction.Fee)
 				fromAccount.Balance[u].Balance.Sub(&fromAccount.Balance[u].Balance, &transaction.Fee)
-				feeAccount.Balance[u].Balance.Add(&feeAccount.Balance[u].Balance, &transaction.Fee)
 			}
 		}
 	}
+	verify := 0
+	for d := 0; d < len(feeAccount.Balance);d++{
+                if( feeAccount.Balance[d].Token == params.Chain().Version.Sue.FeeToken){
+			feeAccount.Balance[d].Balance.Add(&feeAccount.Balance[d].Balance, &transaction.Fee)
+			verify = 1
+			fmt.Println("excist token")
+                }
+	}
+	//fmt.Println(verify)
+	if(verify == 0){
+		fmt.Println("push new token")
+		feeAccount.Balance = append(feeAccount.Balance, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:transaction.Fee})
+	}
+
+
 	return true, fromAccount, feeAccount
 }
 
@@ -302,11 +322,24 @@ func VerifyBalance(transaction types.TransactionJson, fromAccount types.AccountD
 					return false, fromAccount, toAccount
 				}else {
 					fromAccount.Balance[u].Balance.Sub(&fromAccount.Balance[u].Balance,&transaction.Out[i].Balance)
-					toAccount.Balance[u].Balance.Add(&toAccount.Balance[u].Balance,&transaction.Out[i].Balance)
+					//toAccount.Balance[u].Balance.Add(&toAccount.Balance[u].Balance,&transaction.Out[i].Balance)
 				}
 			}
 		}
 	}
+        verify := 0
+        for d := 0; d < len(toAccount.Balance);d++{
+                if( toAccount.Balance[d].Token == params.Chain().Version.Sue.FeeToken){
+                        toAccount.Balance[d].Balance.Add(&toAccount.Balance[d].Balance, &transaction.Fee)
+                        verify = 1
+                        fmt.Println("excist token")
+                }
+        }
+        //fmt.Println(verify)
+        if(verify == 0){
+                fmt.Println("push new token")
+                toAccount.Balance = append(toAccount.Balance, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:transaction.Fee})
+        }
 	return true, fromAccount, toAccount
 }
 
@@ -317,7 +350,7 @@ func ExpTransaction()(types.TransactionJson){
 		"deh",
                 *big.NewInt(1000),
                 0,
-                *big.NewInt(0),
+                *big.NewInt(1),
                 "def",
                 "none",
         )

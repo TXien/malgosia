@@ -12,6 +12,21 @@ import (
 func TestBlock(t *testing.T){
         core_arg := &types.CoreStruct{}
         core_arg.Db = db.OpenDB("../dbdata")
+	tmp := ExpBlock()
+
+        bb := transaction.ExpTransaction()
+        core_arg.PendingTransaction = append(core_arg.PendingTransaction, bb)
+
+	for i := 0; i < 10000; i++{
+		fmt.Println("pending:",core_arg.PendingTransaction)
+		if(len(core_arg.PendingTransaction) != 0){
+			tmp = CreateBlockPOA(core_arg,tmp,"ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba")
+			//fmt.Println(tmp)
+		}
+	}
+	//tt := CreateBlockPOA(core_arg,gg,"ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba")
+	//fmt.Println(gg)
+/*
 	bc := ExpBlock()
 	fmt.Println(bc)
 	hb:= BlockEncode(bc)
@@ -40,10 +55,11 @@ func TestBlock(t *testing.T){
 
 	hb2 := BlockEncode(cb)
 	//fmt.Println(hb2)
+	for i:=0 ;i<100000;i++{
 	sb2 := BlockSign("ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba" ,hb2)
-	fmt.Println(sb2)
-	/*
-	fmt.Println(sb2.Transaction[0])
+		fmt.Println(sb2)
+	}
+
 */
 }
 
