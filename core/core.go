@@ -23,6 +23,7 @@ func core_exp()(*types.CoreStruct){
 }
 */
 func main(){
+
 	core_arg := &types.CoreStruct{}
 	core_arg.Db = db.OpenDB("../dbdata")
 	b := block.BlockEncode(InitBlock())
