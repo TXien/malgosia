@@ -2,6 +2,7 @@ package route
 
 import (
 	//"fmt"
+	//"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,23 @@ type TestBodys_Struct struct {
 }
 
 func Router(coreStruct *types.CoreStruct){
-        Broadcast := func(res http.ResponseWriter, req *http.Request){
+/*
+	Sign := func(res http.ResponseWriter, req *http.Request){
+                res.Header().Add("Access-Control-Allow-Origin","*")
+                //b, _ := ioutil.ReadAll(req.Body)
+                //defer req.Body.Close()
+                //var msg types.TransactionJson
+                //json.Unmarshal(b, &msg)//coreStruct.PendingTransaction)
+		//a,_ := hex.DecodeString(req.Body)
+                //transaction.SignTransaction(a,msg)
+                //fmt.Println(coreStruct.PendingTransaction)
+                res.Header().Set("content-type", "application/json")
+                res.Write([]byte("suc"))
+        }
+
+        http.HandleFunc("/sign", Broadcast)
+*/
+	Broadcast := func(res http.ResponseWriter, req *http.Request){
                 res.Header().Add("Access-Control-Allow-Origin","*")
 		b, _ := ioutil.ReadAll(req.Body)
 		defer req.Body.Close()

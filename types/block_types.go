@@ -2,6 +2,7 @@ package types
 
 import (
 //        "lurcury/core/transaction"
+//	"math/big"
 )
 
 
@@ -21,4 +22,10 @@ type BlockJson struct{
         ExtraData string `json:"extraData"`
         Hash string `json:"hash"`
         Verifier []VerifierJson `json:"verifier"`
+        Allocate []AllocateStruct `json:"allocate"`
+}
+
+type AllocateStruct struct {
+        Address string
+        Amount string//big.Int
 }

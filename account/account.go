@@ -1,9 +1,11 @@
 package account
 
 import (
-	"math/big"
+
+	//"math/big"
 	"encoding/hex"
 	//"fmt"
+        "lurcury/db"
 	eddsa "lurcury/crypto/eddsa"
 	crypto "lurcury/crypto"
 	"lurcury/types"
@@ -22,6 +24,15 @@ type AccountData struct{
 	transaction []string
 }
 */
+func GenesisAccount(core_arg types.CoreStruct,address string,balance string)(bool){
+        s := types.AccountData{
+                Nonce:0,
+		Balance:balance,
+        }
+        db.AccountHexPut(core_arg.Db, address, s)
+	return true
+}
+
 func NewAccount()(string, string, string){
 	pri ,pub := eddsa.EddsaGenerateKey()
 	addr := crypto.KeyToAddress(pri)
@@ -34,36 +45,36 @@ func Account_exp()(types.AccountData){
 //address: gx21ece2f0b9d99cde7254a0309d8065bf1ad070d6
         b := types.BalanceData{
                 Token:"def",
-                Balance:*big.NewInt(100000),
+                Balance:"100000",//big.NewInt(100000),
         }
         c := types.BalanceData{
                 Token:"deh",
-                Balance:*big.NewInt(100000),
+                Balance:"100000",//big.NewInt(100000),
         }
         s := types.AccountData{
                Address:"264411884d6d2aca8ca2d2a77c9dc95ffdcee529",
                 Nonce:0,
-                Balance:[]types.BalanceData{b,c},
+		Balance:"1000000000000000000",
+                Token:[]types.BalanceData{b,c},
                 Transaction:[]types.TransactionJson{},
         }
         //fmt.Println(b,s)
         return s
 }
 
-func InitAccount(address string, nonce int)(types.AccountData){
-	/*
+func InitAccount(address string, tokenName string, amount string/**big.Int*/)(types.AccountData){
+	
 	b := types.BalanceData{
-		//token:"def",
-		//balance:0
+		Token: tokenName,
+		Balance: amount,
 	}
-	*/
+	
 	s := types.AccountData{
 		Address:address,
-		Nonce:nonce,
-		Balance:[]types.BalanceData{},
+		Nonce:0,
+		Token:[]types.BalanceData{b},
 		Transaction:[]types.TransactionJson{},
 	}
-	//fmt.Println(b,s)
 	return s
 }
 

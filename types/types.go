@@ -1,7 +1,7 @@
 package types
 
 import (
-	"math/big"
+	//"math/big"
 	"github.com/syndtr/goleveldb/leveldb"
 	//"lurcury/core/block"
 	//"lurcury/core/transaction"
@@ -21,13 +21,14 @@ type CoreStruct struct {
 
 type BalanceData struct{
         Token string
-        Balance big.Int
+        Balance string//*big.Int
 }
 
 type AccountData struct{
         Address string
         Nonce int
-        Balance []BalanceData
+	Balance string
+        Token []BalanceData
         Transaction []TransactionJson
 }
 
@@ -38,3 +39,4 @@ type CoreStruct struct {
         Config *params.ChainConfigStructure
 	PendingBlock []BlockJson
 }
+ 

@@ -13,24 +13,31 @@ import (
 	"time"
 	"lurcury/crypto"
 )
+
+func BlockProcess(core_arg *types.CoreStruct){
+
+}
+
 func CreateBlockPOA(core_arg *types.CoreStruct, parentBlock types.BlockJson, key string)(types.BlockJson){
 	newBlock := CreateNewBlock(parentBlock)
 	newBlock.Transaction = core_arg.PendingTransaction
 	//fmt.Println("tssst:",newBlock.Transaction)
 	for i := 0; i < len(core_arg.PendingTransaction); i++{
-		result , err:= transaction.VerifyTransactionBalanceAndNonce(*core_arg, core_arg.PendingTransaction[i])
+		result , err:= transaction.VerifyTokenTransactionBalanceAndNonce(*core_arg, core_arg.PendingTransaction[i])
 		fmt.Println(err)
 		if(result == true){
 			newBlock.Transaction = append(newBlock.Transaction, core_arg.PendingTransaction[i])
 		}
+		transaction.DeletPendingTransaction(core_arg,i)
+
 	}
-	//fmt.Println("newBlock:",newBlock)
 	//newBlock.Timestamp = 1536924111618191122
-	//fmt.Println("testtt:",newBlock.Transaction)
+
 	encodeBlock := BlockEncode(newBlock)
 	//fmt.Println("encodeBlock:",encodeBlock)
 	signBlock :=  BlockSign(key, encodeBlock)
-	//fmt.Println("BlockSign.Hash:",signBlock.Hash)
+	fmt.Println("BlockNumber:",signBlock.BlockNumber)
+	fmt.Println("BlockSign.Hash:",signBlock.Hash)
 	db.BlockHexPut(core_arg.Db, signBlock.Hash, signBlock)
         return signBlock
 }

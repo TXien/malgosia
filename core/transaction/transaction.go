@@ -15,18 +15,20 @@ import(
 	//"reflect"
 )
 
-func DeletPendingTransaction(core_arg types.CoreStruct, i int)(types.CoreStruct){
+func DeletPendingTransaction(core_arg *types.CoreStruct, i int)(*types.CoreStruct){
+	fmt.Println(core_arg)
         core_arg.PendingTransaction[i] = core_arg.PendingTransaction[len(core_arg.PendingTransaction)-1]
 	core_arg.PendingTransaction = core_arg.PendingTransaction[:len(core_arg.PendingTransaction)-1]
-        core_arg.PendingTransaction = core_arg.PendingTransaction[:len(core_arg.PendingTransaction)-1]
-        return core_arg
+	fmt.Println(core_arg)
+	return core_arg
 }
 
-func NewTransaction(To string, Token string, Balance big.Int , Nonce int, Fee big.Int, Type string, Input string)(types.TransactionJson){
+func NewTokenTransaction(Balance string,To string, Token string, TokenBalance string/*big.Int*/ , Nonce int, Fee string/*big.Int*/, Type string, Input string)(types.TransactionJson){
 	out := []types.TransactionOut{
-		{Balance: Balance, Token: Token, Vout: 0},
+		{Balance: TokenBalance, Token: Token, Vout: 0},
 	}
 	trans := types.TransactionJson{
+		Balance: Balance,
 		Out: out,
 		To: To,
 		Nonce: Nonce,
@@ -37,8 +39,21 @@ func NewTransaction(To string, Token string, Balance big.Int , Nonce int, Fee bi
 	return trans
 }
 
+func NewTransaction(Balance string, To string, Nonce int, Fee string, Input string)(types.TransactionJson){
+        trans := types.TransactionJson{
+                Balance: Balance,
+                To: To,
+                Nonce: Nonce,
+                Fee: Fee,
+                Type: "none",
+                Input: Input,
+        }
+        return trans
+}
+
 func SignTransaction(pri []byte, Transaction types.TransactionJson)(types.TransactionJson){
-	Transaction.Tx = string(crypto.Keccak256([]byte(EncodeForSign(Transaction))))
+	Transaction.Tx = hex.EncodeToString(crypto.Keccak256([]byte(EncodeForSign(Transaction))))//string(crypto.Keccak256([]byte(EncodeForSign(Transaction))))
+	//fmt.Println("ffff",EncodeForSign(Transaction))
 	sign := eddsa.EddsaSign(pri, crypto.Keccak256([]byte(EncodeForSign(Transaction))))
 	r := eddsa.EddsaKeyToPublicKey(pri)
 	Transaction.Sign = hex.EncodeToString(sign)
@@ -61,8 +76,8 @@ func EncodeForSign(Transaction types.TransactionJson)(string){
         to        := "gx"+StringTransactionEncode(Transaction.To/*[2:]*/, 42)
         nonce_tmp := strconv.FormatInt(int64(Transaction.Nonce), 16)
         nonce     := "hx"+StringTransactionEncode(nonce_tmp, 32)
-        fee_tmp   := strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)
-        fee       := "ix"+StringTransactionEncode(fee_tmp, 32)
+        //fee_tmp   := strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)//strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)
+        fee       := "ix"+StringTransactionEncode(Transaction.Fee, 32)
 	//fmt.Println(Transaction.Type)
         typ_tmp:= hex.EncodeToString([]byte(Transaction.Type))
         typ       := "kx"+StringTransactionEncode(string(typ_tmp), 8)
@@ -70,29 +85,30 @@ func EncodeForSign(Transaction types.TransactionJson)(string){
         input_tmp_str := hex.EncodeToString([]byte(Transaction.Input))
         input_tmp := strconv.FormatInt(int64(len(input_tmp_str)), 16)
         input     := "lx"+StringTransactionEncode(input_tmp,3) + string(input_tmp_str[:])
-        outResult := ""
+	balance   := "sx"+StringTransactionEncode(Transaction.Balance/*[2:]*/, 32)
+	outResult := ""
         token     := ""
-        balance   := ""
+        tokenBalance   := ""
         vout      := ""
         for i :=0; i< len(Transaction.Out); i++ {
                 token_tmp:= hex.EncodeToString([]byte(Transaction.Out[i].Token))
                 token     = StringTransactionEncode(string(token_tmp), 8)
-                balance_tmp   := strconv.FormatInt(int64(Transaction.Out[i].Balance.Uint64()), 16)
-                balance   = StringTransactionEncode(balance_tmp, 32)
+                //balance_tmp   := strconv.FormatInt(int64(Transaction.Out[i].Balance.Uint64()), 16)
+                tokenBalance   = StringTransactionEncode(Transaction.Out[i].Balance,32)//balance_tmp, 32)
                 vout_tmp := strconv.Itoa(Transaction.Out[i].Vout)
                 vout = StringTransactionEncode(vout_tmp,3)
-                outResult = outResult+ "px" + vout + token + balance
+                outResult = outResult+ "px" + vout + token + tokenBalance
         }
-	re := to + nonce + fee + typ + outResult + input
+	re := to + nonce + fee + typ + outResult + input + balance
 	return re
 }
 
 func EncodeTransaction(Transaction types.TransactionJson)(string){
-	to        := "gx"+StringTransactionEncode(Transaction.To[2:], 42)
+	to        := "gx"+StringTransactionEncode(Transaction.To[:]/*Transaction.To[2:]*/, 42)
 	nonce_tmp := strconv.FormatInt(int64(Transaction.Nonce), 16)
 	nonce     := "hx"+StringTransactionEncode(nonce_tmp, 32)
-	fee_tmp   := strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)
-	fee       := "ix"+StringTransactionEncode(fee_tmp, 32)
+	//fee_tmp   := strconv.FormatInt(int64(Transaction.Fee.Uint64()), 16)
+	fee       := "ix"+StringTransactionEncode(Transaction.Fee,32)//fee_tmp, 32)
 	typ_tmp  := hex.EncodeToString([]byte(Transaction.Type))
 	typ       := "kx"+StringTransactionEncode(string(typ_tmp), 8)
 	input_tmp_str := hex.EncodeToString([]byte(Transaction.Input))
@@ -100,23 +116,24 @@ func EncodeTransaction(Transaction types.TransactionJson)(string){
 	input     := "lx"+StringTransactionEncode(input_tmp,3) + string(input_tmp_str[:])
 	outResult := ""
 	token     := ""
-	balance   := ""
+	tokenBalance   := ""
 	vout      := ""
 	for i :=0; i< len(Transaction.Out); i++ {
 		token_tmp:= hex.EncodeToString([]byte(Transaction.Out[i].Token))
 		token     = StringTransactionEncode(string(token_tmp), 8)
-		balance_tmp   := strconv.FormatInt(int64(Transaction.Out[i].Balance.Uint64()), 16)
-		balance   = StringTransactionEncode(balance_tmp, 32)
+		//balance_tmp   := strconv.FormatInt(int64(Transaction.Out[i].Balance.Uint64()), 16)
+		tokenBalance   = StringTransactionEncode(Transaction.Out[i].Balance,32)//balance_tmp, 32)
 		vout_tmp := strconv.Itoa(Transaction.Out[i].Vout)
 		vout = StringTransactionEncode(vout_tmp,3)
-		outResult = outResult+ "px" + vout + token + balance
+		outResult = outResult+ "px" + vout + token + tokenBalance
 	}
 	sign      := "mx"+StringTransactionEncode(Transaction.Sign, 128)
 	publicKey := "nx"+StringTransactionEncode(Transaction.PublicKey, 64)
-	tx        := "gx"+StringTransactionEncode(Transaction.Tx, 64)
+	tx        := "rx"+StringTransactionEncode(Transaction.Tx, 64)
+        balance   := "sx"+StringTransactionEncode(Transaction.Balance/*[2:]*/, 32)
 	//tx        := "gx"+StringTransactionEncode(Transaction.Tx, 64)
 
-	re := to+nonce+fee+typ + outResult + input + sign + publicKey + tx
+	re := to+nonce+fee+typ + outResult + input+ balance + sign + publicKey + tx
 	return re
 }
 
@@ -128,9 +145,10 @@ func DecodeTransaction(transaction string)(types.TransactionJson){
 	l := strings.Index(transaction, "lx")
 	m := strings.Index(transaction, "mx")
 	n := strings.Index(transaction, "nx")
-	p := strings.Index(transaction, "px")
+	//p := strings.Index(transaction, "px")
+        s := strings.Index(transaction, "sx")
 	//fmt.Println(p,g,h,i,k,l,m,n)
-	To := "gx"+transaction[g+4:g+44]
+	To := /*"gx"+*/transaction[g+4:g+44]
 	Nonce,_ := strconv.Atoi(transaction[h+2:h+34])
 	Fee := new(big.Int)
 	Fee.SetString(transaction[i+2:i+34],10)
@@ -142,27 +160,30 @@ func DecodeTransaction(transaction string)(types.TransactionJson){
 	Input := string(Input_tmp)
 	Sign := transaction[m+2:m+130]
 	PublicKey := transaction[n+2:n+66]
-
+        Balance := transaction[s+2:s+34]
+	/*
 	out := transaction[p:p+45]
 	Vout,_ := strconv.ParseInt(out[2:5],16, 10)
 	Token,_ := hex.DecodeString(out[5:13])
+	
 	//fmt.Println(string(Token))
-	balance := new(big.Int)
-	balance, _ = balance.SetString(out[13:45], 16)
+	tokenBalance := new(big.Int)
+	tokenBalance, _ = tokenBalance.SetString(out[13:45], 16)
 	outJson := []types.TransactionOut{
 		{
 			Token:string(Token),
-			Balance:*balance,
+			Balance:(*tokenBalance).String(),
 			Vout:int(Vout)},
 	}
-
+	*/
 	//outJson = append(outJson, TransactionOut{Token:string(Token)})
 	//fmt.Println(outJson[1].Token)
         trans := types.TransactionJson{
-                Out: outJson,
+                //Out: outJson,
+		Balance:Balance,
                 To: To,
                 Nonce: Nonce,
-                Fee: *Fee,
+                Fee: (*Fee).String(),
                 Type: Type,
                 Input: Input,
                 Sign: Sign,
@@ -227,6 +248,8 @@ func BigIntTransactionEncode(fee big.Int, times int)(string){
 func VerifyTransactionSign(Transaction types.TransactionJson)( bool){
 	pub,_ := hex.DecodeString(Transaction.PublicKey)
 	msg := crypto.Keccak256([]byte(EncodeForSign(Transaction)))
+	//fmt.Println("fff:",EncodeForSign(Transaction))
+	//fmt.Println("testr:",hex.EncodeToString(msg))
 	sign,_:= hex.DecodeString(Transaction.Sign)
 	re := eddsa.EddsaVerify(pub,
 		msg,
@@ -235,20 +258,17 @@ func VerifyTransactionSign(Transaction types.TransactionJson)( bool){
 	return re
 }
 
-func VerifyTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction types.TransactionJson)(bool, string){
+func VerifyTokenTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction types.TransactionJson)(bool, string){
 	
 	address := crypto.KeyToAddress_hex(Transaction.PublicKey)
-	//fmt.Println(Transaction.PublicKey)
-	//fmt.Println(address)
 	fromAccountInfo := db.AccountHexGet(core_arg.Db, address)
-	//feeAccountInfo := db.AccountHexGet(core_arg.Db, params.Chain().Version.Sue.FeeAddress)
-	//fmt.Println(fromAccountInfo)
-        //fmt.Println("testn:", Transaction.Nonce)
-        //fmt.Println("testn:", fromAccountInfo.Nonce)
 	
-	if(Transaction.Nonce != fromAccountInfo.Nonce){
-		return false, "nonce error"
-	}
+        if(Transaction.Nonce > fromAccountInfo.Nonce){
+                return false, "nonce too high"
+        }
+        if(Transaction.Nonce < fromAccountInfo.Nonce){
+                return false, "nonce too low"
+        }
         feeAccountInfo := db.AccountHexGet(core_arg.Db, params.Chain().Version.Sue.FeeAddress)
 	feeResult, fromAccountInfo, feeAccountInfo := VerifyFee(Transaction, fromAccountInfo, feeAccountInfo)
 
@@ -256,50 +276,47 @@ func VerifyTransactionBalanceAndNonce(core_arg types.CoreStruct ,Transaction typ
 		return false, "fee error"
         }
 
-        if(Transaction.Nonce != fromAccountInfo.Nonce){
-                return false, "nonce error"
-        }
 	toAccountInfo := db.AccountHexGet(core_arg.Db, Transaction.To)
-	//ToAddress_s :=Transaction.To
-	//fmt.Println("from:",fromAccountInfo)
-	//fmt.Println("to:",toAccountInfo)
-	//if(fromAccountInfo.Address != toAccountInfo.Address){
+	
 	if (fromAccountInfo.Address == toAccountInfo.Address){
 		return false, "same address"
 	}
 	balanceResult, fromAccountInfo, toAccountInfo := VerifyBalance(Transaction, fromAccountInfo, toAccountInfo)
-	//}
-	//fmt.Println("test1",fromAccountInfo)
 	if(balanceResult != true){
 		return false, "balance error"
 	}
 
 	fromAccountInfo.Nonce = fromAccountInfo.Nonce+1
-	//toAccountInfo.Nonce = toAccountInfo.Nonce+1
-	//compare balance
+	toAccountInfo.Transaction= append(toAccountInfo.Transaction, Transaction)
 	db.AccountHexPut(core_arg.Db, address, fromAccountInfo)
 	db.AccountHexPut(core_arg.Db, Transaction.To, toAccountInfo)
 
         return true, "success"
 }
 
-func VerifyFee(transaction types.TransactionJson, fromAccount types.AccountData, feeAccount types.AccountData)(bool, types.AccountData, types.AccountData){
-
-	for u:= 0; u < len(fromAccount.Balance); u++{
+func VerifyTokenFee(transaction types.TransactionJson, fromAccount types.AccountData, feeAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+        fromBalance := new(big.Int)
+        feeBalance := new(big.Int)	
+	for u:= 0; u < len(fromAccount.Token); u++{
 		//fmt.Println(fromAccount.Balance)
-		if( fromAccount.Balance[u].Token == params.Chain().Version.Sue.FeeToken){
-			if(transaction.Fee.Cmp(&fromAccount.Balance[u].Balance)>=0){
+		fromBalance.SetString(fromAccount.Token[u].Balance,10)
+		feeBalance.SetString(transaction.Fee,10)
+		if( fromAccount.Token[u].Token == params.Chain().Version.Sue.FeeToken){
+			if(/*big.*/feeBalance.Cmp(fromBalance)>=0){
 				return false, fromAccount, feeAccount
 			}else{
 				//feeAccount.Balance[d].Balance.Add(&feeAccount.Balance[d].Balance, &transaction.Fee)
-				fromAccount.Balance[u].Balance.Sub(&fromAccount.Balance[u].Balance, &transaction.Fee)
+				fromBalance.Sub(fromBalance, feeBalance)
 			}
 		}
+		fromAccount.Token[u].Balance = fromBalance.String()
 	}
 	verify := 0
-	for d := 0; d < len(feeAccount.Balance);d++{
-                if( feeAccount.Balance[d].Token == params.Chain().Version.Sue.FeeToken){
-			feeAccount.Balance[d].Balance.Add(&feeAccount.Balance[d].Balance, &transaction.Fee)
+	for d := 0; d < len(feeAccount.Token);d++{
+                fromBalance.SetString(fromAccount.Token[d].Balance,10)
+                feeBalance.SetString(transaction.Fee,10)
+                if(fromAccount.Token[d].Token == params.Chain().Version.Sue.FeeToken){
+			fromBalance.Add(fromBalance, feeBalance)
 			verify = 1
 			fmt.Println("excist token")
                 }
@@ -307,57 +324,123 @@ func VerifyFee(transaction types.TransactionJson, fromAccount types.AccountData,
 	//fmt.Println(verify)
 	if(verify == 0){
 		fmt.Println("push new token")
-		feeAccount.Balance = append(feeAccount.Balance, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:transaction.Fee})
+		feeAccount.Token = append(feeAccount.Token, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:transaction.Fee})
 	}
 
 
 	return true, fromAccount, feeAccount
 }
 
-func VerifyBalance(transaction types.TransactionJson, fromAccount types.AccountData, toAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+func VerifyTokenBalance(transaction types.TransactionJson, fromAccount types.AccountData, toAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+	signBalance := new(big.Int)
+        dbBalance := new(big.Int)
+        //toBalance := new(big.Int)
 	for i:=0; i< len(transaction.Out); i++ {
-		for u:= 0; u < len(fromAccount.Balance); u++{
-			if(transaction.Out[i].Token[1:] == fromAccount.Balance[u].Token){
-				if(transaction.Out[i].Balance.Cmp(&fromAccount.Balance[u].Balance)>=0){
+		for u:= 0; u < len(fromAccount.Token); u++{
+                	dbBalance.SetString(fromAccount.Token[u].Balance,10)
+                	signBalance.SetString(transaction.Out[i].Balance,10)
+			if(transaction.Out[i].Token[1:] == fromAccount.Token[u].Token){
+				if(signBalance.Cmp(dbBalance)>=0){
 					return false, fromAccount, toAccount
 				}else {
-					fromAccount.Balance[u].Balance.Sub(&fromAccount.Balance[u].Balance,&transaction.Out[i].Balance)
+					dbBalance.Sub(dbBalance,signBalance)
 					//toAccount.Balance[u].Balance.Add(&toAccount.Balance[u].Balance,&transaction.Out[i].Balance)
 				}
 			}
 		}
 	}
+	/*
         verify := 0
         for d := 0; d < len(toAccount.Balance);d++{
+		toBalance.SetString(toAccount.Balance[d].Balance,10)
                 if( toAccount.Balance[d].Token == params.Chain().Version.Sue.FeeToken){
-                        toAccount.Balance[d].Balance.Add(&toAccount.Balance[d].Balance, &transaction.Fee)
+                        toBalance.Add(toBalance, &transaction.Fee)
                         verify = 1
                         fmt.Println("excist token")
                 }
         }
         //fmt.Println(verify)
+	
         if(verify == 0){
                 fmt.Println("push new token")
-                toAccount.Balance = append(toAccount.Balance, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:transaction.Fee})
+                toAccount.Balance = append(toAccount.Balance, types.BalanceData{Token:params.Chain().Version.Sue.FeeToken,Balance:*transaction.Fee})
         }
+	*/
 	return true, fromAccount, toAccount
+}
+
+func VerifyFee(transaction types.TransactionJson, fromAccount types.AccountData, feeAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+        fromBalance := new(big.Int)
+        feeBalance := new(big.Int)
+        transBalance := new(big.Int)
+        fromBalance.SetString(fromAccount.Balance,10)
+        feeBalance.SetString(feeAccount.Balance,10)
+        transBalance.SetString(transaction.Balance,10)
+        if(fromBalance.Cmp(transBalance)>=0){
+                fromBalance.Sub(fromBalance, transBalance)
+                feeBalance.Add(feeBalance, transBalance)
+                fromAccount.Balance = fromBalance.String()
+                feeAccount.Balance = feeBalance.String()
+                return true, fromAccount, feeAccount
+        }else {
+                return false, fromAccount, feeAccount
+        }
+}
+
+func VerifyBalance(transaction types.TransactionJson, fromAccount types.AccountData, toAccount types.AccountData)(bool, types.AccountData, types.AccountData){
+	fromBalance := new(big.Int)
+        toBalance := new(big.Int)
+        transBalance := new(big.Int)
+	fromBalance.SetString(fromAccount.Balance,10)
+	toBalance.SetString(toAccount.Balance,10)
+	transBalance.SetString(transaction.Balance,10)
+	if(fromBalance.Cmp(transBalance)>=0){
+		fromBalance.Sub(fromBalance, transBalance)
+		toBalance.Add(toBalance, transBalance)
+		fromAccount.Balance = fromBalance.String()
+		toAccount.Balance = toBalance.String()
+        	return true, fromAccount, toAccount
+	}else {
+		return false, fromAccount, toAccount
+	}
 }
 
 func ExpTransaction()(types.TransactionJson){
         re := NewTransaction(
-                //"gx5ee464a101d58877f00957eff452c148e7f75834",
-		"264411884d6d2aca8ca2d2a77c9dc95ffdcee529",
+                "1",
+		"264411884d6d2aca8ca2d2a77c9dc95ffdcee521",
+		0,
+                "100",//*big.NewInt(1),
+                "none",
+        )
+        a,_ := hex.DecodeString("ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba")
+        result := SignTransaction(a,re)
+        //fmt.Println("re",result.Tx)
+        re2 := EncodeTransaction(result)
+        //fmt.Println("re2",re2)
+        bb := DecodeTransaction(re2)
+        //fmt.Println("bb",bb)
+        return bb
+}
+
+func ExpTokenTransaction()(types.TransactionJson){
+        re := NewTokenTransaction(
+                "1",
+		"264411884d6d2aca8ca2d2a77c9dc95ffdcee521",
 		"deh",
-                *big.NewInt(1000),
-                0,
-                *big.NewInt(1),
+                "",//*big.NewInt(1000),
+                1,
+                "",//*big.NewInt(1),
                 "def",
                 "none",
         )
         a,_ := hex.DecodeString("ab70ef5f36dbfd9e403ed4ffd5b1c51dc7ce761ee21c8dc72570c6d73bb9412b0b1d7080dd923a7dfe42de42ee3e13feebd9c56f4c5cff6862e2d2890b4e1aba")
         result := SignTransaction(a,re)
+	//fmt.Println("re",result.Tx)
         re2 := EncodeTransaction(result)
+	//fmt.Println("re2",re2)
         bb := DecodeTransaction(re2)
+	//fmt.Println("bb",bb)
 	return bb
 }
 
